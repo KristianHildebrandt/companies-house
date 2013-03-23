@@ -80,21 +80,6 @@ module CompaniesHouse
       end
     end
 
-    def objectify response_xml
-      doc = Nokogiri::XML(response_xml)
-      qualifier = doc.at('Qualifier')
-      if qualifier && qualifier.inner_text.to_s[/error/]
-        raise_error doc
-      else
-        body = doc.at('Body')
-        if body && body.children.select(&:elem?).size > 0
-          objectify_body body
-        else
-          nil
-        end
-      end
-    end
-
     private
 
       def add_to_message attribute, error, message, suffix=''
@@ -114,27 +99,6 @@ module CompaniesHouse
         raise CompaniesHouse::Exception.new(message.join(' '))
       end
 
-      def objectify_body body
-        xml = body.children.select(&:elem?).first.to_s
-        hash = Hash.from_xml(xml)
-        object = Morph.from_hash(hash, CompaniesHouse)
-        if object && object.class.name == 'CompaniesHouse::CompanyDetails'
-          if object.respond_to?(:sic_codes)
-            sic_codes = object.sic_codes
-            if sic_codes.respond_to?(:sic_text) && sic_codes.sic_text
-              sic_codes.morph(:sic_texts, [sic_codes.sic_text])
-            elsif sic_codes.respond_to?(:sic_texts) && sic_codes.sic_texts
-              # leave as is
-            else
-              object.morph(:sic_codes, Morph.from_hash({:sic_codes => {'sic_texts' => []} }) )
-            end
-          else
-            object.morph(:sic_codes, Morph.from_hash({:sic_codes => {'sic_texts' => []} }) )
-          end
-        end
-        object
-      end
-
       def get_response(data, root_element='NameSearch')
         begin
           http = Net::HTTP.new("xmlgw.companieshouse.gov.uk", 80)
@@ -142,7 +106,7 @@ module CompaniesHouse
           case res
             when Net::HTTPSuccess, Net::HTTPRedirection
               xml = res.body
-              objectify xml
+              Hash.from_xml xml
             else
               raise CompaniesHouse::Exception.new(res.inspect.to_s)
           end

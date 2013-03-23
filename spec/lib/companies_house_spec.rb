@@ -5,13 +5,13 @@ describe CompaniesHouse do
   describe 'when objectifying xml' do
     describe 'and xml contains response in Body' do
       it 'should return an instance of CompaniesHouse::CompanyDetails' do
-        xml = '<Body><company_details><company_name>£IBRA FINANCIAL SERVICES LIMITED</company_name></company_details></Body>'
+        xml = '<Body><company_details><company_name>IBRA FINANCIAL SERVICES LIMITED</company_name></company_details></Body>'
         object = CompaniesHouse.objectify xml
         object.class.name.should == 'CompaniesHouse::CompanyDetails'
       end
       describe 'and xml contains expanded unicode' do
         it 'should convert to utf8' do
-          xml = '<Body><company_details><company_name>£IBRA FINANCIAL SERVICES LIMITED</company_name></company_details></Body>'
+          xml = '<Body><company_details><company_name>IBRA FINANCIAL SERVICES LIMITED</company_name></company_details></Body>'
           object = CompaniesHouse.objectify xml
           object.company_name.should == "£IBRA FINANCIAL SERVICES LIMITED"
         end
@@ -137,7 +137,7 @@ describe CompaniesHouse do
         transaction_id.should == @transaction_id
         digest.should == @digest
       end
-      
+
       describe "and password and sender_id passed as options" do
         it "should use in preference to class ones" do
           Digest::MD5.should_receive(:hexdigest).with("foo1234bar4567#{@transaction_id}")# @digest
@@ -145,7 +145,7 @@ describe CompaniesHouse do
         end
       end
     end
-    
+
     describe "when asked for name search request" do
       it 'should perform request correctly' do
         CompaniesHouse::Request.should_receive(:name_search_xml).with(:company_name=> @company_name).and_return @request_xml
